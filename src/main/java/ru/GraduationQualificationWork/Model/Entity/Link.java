@@ -1,8 +1,10 @@
 package ru.GraduationQualificationWork.Model.Entity;
 
+import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -18,9 +20,11 @@ public class Link {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @NotNull
     @Column(name = "Level")
     private Integer level;
 
+    @NotNull
     @Column(name = "Adress")
     private String adress;
 
@@ -28,6 +32,11 @@ public class Link {
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "link")
     @Column(name = "Variables")
     private List<Variable> variable;
+
+//    @ElementCollection
+//    @CollectionTable(name = "Parents", joinColumns = @JoinColumn(name = "id"))
+    @Column(name = "Parents")
+    private Long parents;
 
 
     public final Long getId() {
@@ -54,11 +63,19 @@ public class Link {
         this.adress = adress;
     }
 
-    public final List<Variable> getVariable() {
+    public final List<Variable> getVariables() {
         return variable;
     }
 
     public final void setVariable(List<Variable> variable) {
         this.variable = variable;
+    }
+
+    public final Long getParentIdSet() {
+        return parents;
+    }
+
+    public final void setParentId(Long parentId) {
+        this.parents = parentId;
     }
 }

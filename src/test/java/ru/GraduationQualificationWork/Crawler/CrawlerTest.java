@@ -35,7 +35,7 @@ public class CrawlerTest implements ApplicationContextAware {
     @Autowired
     private ApplicationContext applicationContext;
 
-    private final String url = "http://localhost:8080";
+    private final String url = "http://google.com";
     private  LinkDao linkDao;
 
     public CrawlerTest() {
@@ -52,20 +52,10 @@ public class CrawlerTest implements ApplicationContextAware {
 //            return null;
 //        }).when(linkDao).save(anyString());
     }
-    @Test
-    public final void getConnectionTest() {
-        Document doc = crawler.getDocument();
-        assertEquals("Google", doc.title());
-    }
 
     @Test
-    public final void getLinksTest() {
-        List<Element> links = crawler.getLinks(url);
-        assertNotNull(links);
-        for(Element link : links) {
-            System.out.println("### " + link.attr("href"));
-            assertTrue(String.format("Ссылка %s не с целевого сайта", link.attr("href")), link.attr("href").contains("google"));
-        }
+    public final void getConnectionTest() {
+        assertEquals("Google", crawler.getTitle());
     }
 
     @Test
@@ -83,7 +73,7 @@ public class CrawlerTest implements ApplicationContextAware {
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
-        this.crawler = (Crawler) applicationContext.getBean(Crawler.class);
+        this.crawler = applicationContext.getBean(Crawler.class);
     }
 
 //    @Test

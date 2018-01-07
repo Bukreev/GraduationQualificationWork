@@ -2,9 +2,11 @@ package ru.GraduationQualificationWork.Model.DAO;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.GraduationQualificationWork.Model.Entity.Link;
 import ru.GraduationQualificationWork.Model.Repositories.LinkRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,7 +21,7 @@ import java.util.stream.StreamSupport;
 public class LinkDao {
 
 
-    LinkRepository linkRepository;
+    private final LinkRepository linkRepository;
 
     @Autowired
     public LinkDao(LinkRepository linkRepository) {
@@ -44,10 +46,24 @@ public class LinkDao {
 
     // Сохранить ссылку
 
-    public final void save(String url) {
+    public final void save(Link link) {
+        linkRepository.save(link);
+    }
+
+    // Сохраняет ссылку с указанием родителя
+
+    public final void save(String url, Link parentLink) {
+        List<Link> parents = new ArrayList();
         Link link = new Link();
         link.setAdress(url);
+//        link.setParentLinks(parents);
         linkRepository.save(link);
+    }
+
+    // Добавить родителя
+
+    public final void addParent(Link link) {
+
     }
 
     // Найти ссылку по адресу

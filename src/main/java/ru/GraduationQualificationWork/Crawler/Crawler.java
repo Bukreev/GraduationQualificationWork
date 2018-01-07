@@ -1,5 +1,7 @@
 package ru.GraduationQualificationWork.Crawler;
 
+import org.jsoup.Connection;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -7,9 +9,12 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.GraduationQualificationWork.Model.DAO.LinkDao;
+import ru.GraduationQualificationWork.Model.Entity.Link;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -27,34 +32,41 @@ public class Crawler {
 
     // Устанавливает BaseURl
 
-    public final void setBaseUrl(String baseUrl) {
+    public final void setBaseUrl(String baseUrl) throws IOException {
         this.baseUrl = baseUrl;
+        this.doc = Jsoup.connect(baseUrl).get();
     }
 
-    // Возвращает объект документа
-
-    public final Document getDocument() {
-        return doc;
-    }
 
     // Возвращает ссылки со страницы
 
-    public final List<Element> getLinks(String url) {
+    private List<Element> getLinks(String url) {
         Elements links = doc.select("a[href]");
         return links.stream().filter(x -> x.attr("href").contains(url) || x.attr("href").startsWith("/")).collect(Collectors.toList());
+    }
+
+    // Title страницы
+
+    public final String getTitle() {
+        return doc.title();
     }
 
     // Обходит все ссылки по заданной глубине
 
     public final void crawl(int deep) throws IOException {
-        this.doc = Jsoup.connect(baseUrl).get();
+        Connection code = Jsoup.connect(baseUrl);
+        this.doc = code.get();
         for (int i = deep; i > 0; i--) {
             List<Element> list = getLinks(baseUrl);
             if (list.size() != 0) {
                 for (Element link : list) {
-                    linkDao.save(link.attr("href"));
+                    Link link1 = new Link();
+                    link1.setAdress(link.attr("href"));
+                    link1.setParentId(3L);
+                    linkDao.save(link1);
                     Long id = linkDao.getLinkByAdress(link.attr("href")).getId();
-                    System.out.println(String.format("%s", link.attr("href")));
+                    Long test = linkDao.getLinkByAdress(link.attr("href")).getParentIdSet();
+                    System.out.println(String.format("%s --->", link1.getAdress()));
                     crawl(i, link.attr("href"), id);
                 }
 
@@ -65,20 +77,32 @@ public class Crawler {
     }
 
     public final void crawl(int deep, String url, Long index) throws IOException {
+        Integer response;
         try {
-            this.doc = Jsoup.connect(url).get();
-        } catch (IllegalArgumentException e) {
-            this.doc = Jsoup.connect(baseUrl + url).get();
-        }
-        for (int i = deep; i > 0; i--) {
-            List<Element> list = getLinks(url);
-            if (list.size() != 0) {
-                for (Element link : list) {
-                    System.out.println(String.format("---> %s", link.attr("href")));
-                    crawl(i, link.attr("href"), index);
-                }
-            }
+            Connection connect = Jsoup.connect(url);
+            response = connect.response().statusCode();
+            this.doc = connect.get();
 
+        } catch (IllegalArgumentException e) {
+            Connection connect = Jsoup.connect(baseUrl + url);
+            response = connect.response().statusCode();
+            try {
+                this.doc = connect.get();
+            } catch (HttpStatusException er) {
+
+            }
+        }
+        if (response != 404) {
+            for (int i = deep; i > 0; i--) {
+                List<Element> list = getLinks(url);
+                if (list.size() != 0) {
+                    for (Element link : list) {
+                        System.out.println(String.format("---> %s", link.attr("href")));
+                        crawl(i, link.attr("href"), index);
+                    }
+                }
+
+            }
         }
 
     }
