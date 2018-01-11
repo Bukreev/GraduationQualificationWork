@@ -60,6 +60,10 @@ public class Crawler {
             List<Element> list = getLinks(baseUrl);
             if (list.size() != 0) {
                 for (Element link : list) {
+                    Link entity = linkDao.getLinkByAdress(link.attr("href"));
+                    if (entity == null) {
+
+                    }
                     Link link1 = new Link();
                     link1.setAdress(link.attr("href"));
                     link1.setParentId(3L);
@@ -76,8 +80,9 @@ public class Crawler {
 
     }
 
-    public final void crawl(int deep, String url, Long index) throws IOException {
+    public final void crawl(int deep, String adress, Long index) throws IOException {
         Integer response;
+        String url = adress.startsWith("//") ? adress.substring(2) : adress;
         try {
             Connection connect = Jsoup.connect(url);
             response = connect.response().statusCode();
