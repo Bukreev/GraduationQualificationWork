@@ -42,7 +42,8 @@ public class Crawler {
 
     private List<Element> getLinks(String url) {
         Elements links = doc.select("a[href]");
-        return links.stream().filter(x -> x.attr("href").contains(url) || x.attr("href").startsWith("/")).collect(Collectors.toList());
+        return links.stream().filter(x -> x.attr("href").contains(url) || x.attr("href").startsWith("/"))
+                .collect(Collectors.toList());
     }
 
     // Title страницы
@@ -60,16 +61,10 @@ public class Crawler {
             List<Element> list = getLinks(baseUrl);
             if (list.size() != 0) {
                 for (Element link : list) {
-                    Link entity = linkDao.getLinkByAdress(link.attr("href"));
-                    if (entity == null) {
-
-                    }
-                    Link link1 = new Link();
-                    link1.setAdress(link.attr("href"));
-                    link1.setParentId(3L);
-                    linkDao.save(link1);
-                    Long id = linkDao.getLinkByAdress(link.attr("href")).getId();
-                    Long test = linkDao.getLinkByAdress(link.attr("href")).getParentIdSet();
+                    saveLink(link.attr("href"), null);
+                    Link link1 = linkDao.getLinkByAdress(link.attr("href"));
+                    Long id = link1.getId();
+//                    Long test = linkDao.getLinkByAdress(link.attr("href")).getParentIdSet();
                     System.out.println(String.format("%s --->", link1.getAdress()));
                     crawl(i, link.attr("href"), id);
                 }
@@ -82,34 +77,64 @@ public class Crawler {
 
     public final void crawl(int deep, String adress, Long index) throws IOException {
         Integer response;
-        String url = adress.startsWith("//") ? adress.substring(2) : adress;
-        try {
-            Connection connect = Jsoup.connect(url);
-            response = connect.response().statusCode();
-            this.doc = connect.get();
-
-        } catch (IllegalArgumentException e) {
-            Connection connect = Jsoup.connect(baseUrl + url);
-            response = connect.response().statusCode();
+        if (!adress.equals("/")) {
+            String url = adress.startsWith("//") ? adress.substring(2) : adress;
+            if (!url.startsWith("http://")) {
+                url = "http://" + url;
+            }
             try {
+                Connection connect = Jsoup.connect(url);
+                response = connect.response().statusCode();
                 this.doc = connect.get();
-            } catch (HttpStatusException er) {
 
-            }
-        }
-        if (response != 404) {
-            for (int i = deep; i > 0; i--) {
-                List<Element> list = getLinks(url);
-                if (list.size() != 0) {
-                    for (Element link : list) {
-                        System.out.println(String.format("---> %s", link.attr("href")));
-                        crawl(i, link.attr("href"), index);
-                    }
+            } catch (IllegalArgumentException e) {
+                Connection connect = Jsoup.connect(baseUrl + url);
+                response = connect.response().statusCode();
+                try {
+                    this.doc = connect.get();
+                } catch (HttpStatusException er) {
+
                 }
+            }
+            if (response != 404) {
+                for (int i = deep; i > 0; i--) {
+                    List<Element> list = getLinks(url);
+                    if (list.size() != 0) {
+                        for (Element link : list) {
+                            saveLink(link.attr("href"), null);
+                            System.out.println(String.format("---> %s", link.attr("href")));
+                            if (!linkPresent(link.attr("href")))
+                                crawl(i, link.attr("href"), index);
+                        }
+                    }
 
+                }
             }
         }
 
+    }
+
+    // Сохраняет новую ссылку или обновляет существующую
+
+    private void saveLink(String url, Long parentId) {
+
+        if (linkPresent(url)) {
+            Link link = new Link();
+            link.setAdress(url);
+            if (parentId != null)
+                link.setParentId(parentId);
+            linkDao.save(link);
+
+        } else {
+//            linkDao.save(url, parentId);
+        }
+    }
+
+    // Ссылка присутствует в базе
+
+    private boolean linkPresent(String url) {
+        Link entity = linkDao.getLinkByAdress(url);
+        return entity != null;
     }
 
 }

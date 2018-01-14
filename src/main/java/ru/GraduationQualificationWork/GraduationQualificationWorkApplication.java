@@ -35,7 +35,7 @@ public class GraduationQualificationWorkApplication {
 		final Crawler spider = context.getBean(Crawler.class);
 
 		try {
-		    spider.setBaseUrl("http://yandex.ru");
+		    spider.setBaseUrl("http://www.google.com");
 			spider.crawl(3);
 		} catch (Exception e) {
 			e.printStackTrace();
