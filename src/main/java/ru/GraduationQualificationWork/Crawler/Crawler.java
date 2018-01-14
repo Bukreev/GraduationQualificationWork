@@ -103,7 +103,7 @@ public class Crawler {
 
             }
         }
-        System.out.println(String.format("### %s", response));
+
         if (response != 404) {
             for (int i = deep; i > 0; i--) {
                 List<String> list = getLinks(url);
