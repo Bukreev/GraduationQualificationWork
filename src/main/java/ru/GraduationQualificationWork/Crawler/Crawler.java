@@ -4,7 +4,6 @@ import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,9 +11,10 @@ import ru.GraduationQualificationWork.Model.DAO.LinkDao;
 import ru.GraduationQualificationWork.Model.Entity.Link;
 
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
@@ -40,10 +40,24 @@ public class Crawler {
 
     // Возвращает ссылки со страницы
 
-    private List<Element> getLinks(String url) {
-        Elements links = doc.select("a[href]");
-        return links.stream().filter(x -> x.attr("href").contains(url) || x.attr("href").startsWith("/"))
+    private List<String> getLinks(String url) {
+        List<String> clearLinks = new ArrayList<>();
+        Elements linksElement = doc.select("a[href]");
+        String domainName = getDomainName(baseUrl);
+        List<String> links = linksElement.stream().map(x -> x.attr("href")).filter(x -> x.contains(domainName))
                 .collect(Collectors.toList());
+        for (String link : links) {
+            if (link.startsWith("//")) {
+                link = "http:" + link;
+                clearLinks.add(link);
+            } else if (link.startsWith("/") && link.length() > 1) {
+                link = link.substring(1);
+                clearLinks.add(link);
+            } else if (!link.equals("/")) {
+                clearLinks.add(link);
+            }
+        }
+        return clearLinks;
     }
 
     // Title страницы
@@ -58,15 +72,13 @@ public class Crawler {
         Connection code = Jsoup.connect(baseUrl);
         this.doc = code.get();
         for (int i = deep; i > 0; i--) {
-            List<Element> list = getLinks(baseUrl);
+            List<String> list = getLinks(baseUrl);
             if (list.size() != 0) {
-                for (Element link : list) {
-                    saveLink(link.attr("href"), null);
-                    Link link1 = linkDao.getLinkByAdress(link.attr("href"));
-                    Long id = link1.getId();
-//                    Long test = linkDao.getLinkByAdress(link.attr("href")).getParentIdSet();
-                    System.out.println(String.format("%s --->", link1.getAdress()));
-                    crawl(i, link.attr("href"), id);
+                for (String link : list) {
+                    saveLink(link, null);
+                    Long id = linkDao.getLinkByAdress(link).getId();
+//                    System.out.println(String.format("%s --->", link));
+                    crawl(i, link, id);
                 }
 
             }
@@ -75,59 +87,51 @@ public class Crawler {
 
     }
 
-    public final void crawl(int deep, String adress, Long index) throws IOException {
+    private void crawl(int deep, String url, Long index) throws IOException {
         Integer response;
-        if (!adress.equals("/")) {
-            String url = adress.startsWith("//") ? adress.substring(2) : adress;
-            if (!url.startsWith("http://")) {
-                url = "http://" + url;
-            }
+        try {
+            Connection connect = Jsoup.connect(url);
+            response = connect.response().statusCode();
+            this.doc = connect.get();
+
+        } catch (IllegalArgumentException e) {
+            Connection connect = Jsoup.connect(baseUrl + "/" + url);
+            response = connect.response().statusCode();
             try {
-                Connection connect = Jsoup.connect(url);
-                response = connect.response().statusCode();
                 this.doc = connect.get();
+            } catch (HttpStatusException er) {
 
-            } catch (IllegalArgumentException e) {
-                Connection connect = Jsoup.connect(baseUrl + url);
-                response = connect.response().statusCode();
-                try {
-                    this.doc = connect.get();
-                } catch (HttpStatusException er) {
-
-                }
-            }
-            if (response != 404) {
-                for (int i = deep; i > 0; i--) {
-                    List<Element> list = getLinks(url);
-                    if (list.size() != 0) {
-                        for (Element link : list) {
-                            saveLink(link.attr("href"), null);
-                            System.out.println(String.format("---> %s", link.attr("href")));
-                            if (!linkPresent(link.attr("href")))
-                                crawl(i, link.attr("href"), index);
-                        }
-                    }
-
-                }
             }
         }
+        System.out.println(String.format("### %s", response));
+        if (response != 404) {
+            for (int i = deep; i > 0; i--) {
+                List<String> list = getLinks(url);
+                if (list.size() != 0) {
+                    for (String link : list) {
+                        if (linkPresent(link)) {
+                            addLinkParent(index);
+                        } else {
+                            saveLink(link, null);
+//                            System.out.println(String.format("---> %s", link));
+                            crawl(i, link, index);
+                        }
+                    }
+                }
 
+            }
+        }
     }
 
     // Сохраняет новую ссылку или обновляет существующую
 
     private void saveLink(String url, Long parentId) {
+        Link link = new Link();
+        link.setAdress(url);
+        if (parentId != null)
+            link.setParentId(parentId);
+        linkDao.save(link);
 
-        if (linkPresent(url)) {
-            Link link = new Link();
-            link.setAdress(url);
-            if (parentId != null)
-                link.setParentId(parentId);
-            linkDao.save(link);
-
-        } else {
-//            linkDao.save(url, parentId);
-        }
     }
 
     // Ссылка присутствует в базе
@@ -135,6 +139,28 @@ public class Crawler {
     private boolean linkPresent(String url) {
         Link entity = linkDao.getLinkByAdress(url);
         return entity != null;
+    }
+
+    // Получает доменное имя
+
+    private String getDomainName(String link) {
+        String result = null;
+        String pattern = "(?<=www.)(.*)(?=\\.)";
+        Pattern compailed = Pattern.compile(pattern);
+        Matcher matcher = compailed.matcher(link);
+
+        while (matcher.find()) {
+            result = link.substring(matcher.start(), matcher.end());
+        }
+
+        return result;
+
+    }
+
+    // Добавляет предка ссылке
+
+    private void addLinkParent(Long id) {
+
     }
 
 }
