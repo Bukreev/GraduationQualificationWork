@@ -80,9 +80,9 @@ public class Crawler {
             if (list.size() != 0) {
                 for (String link : list) {
                     saveLink(link, null, i);
-                    Long id = linkDao.getLinkByAdress(link).getId();
-//                    System.out.println(String.format("%s --->", link));
-                    crawl(i, link, id);
+                    List<Link> parent = linkDao.getLinkByAdress(link).getParents();
+                    System.out.println(String.format("%s --->", link));
+                    crawl(i, link, null);
                 }
 
             }
@@ -91,7 +91,7 @@ public class Crawler {
 
     }
 
-    private void crawl(int deep, String url, Long index) throws IOException {
+    private void crawl(int deep, String url, Link parentLink) throws IOException {
         Integer response;
         try {
             Connection connect = Jsoup.connect(url);
@@ -104,7 +104,7 @@ public class Crawler {
             try {
                 this.doc = connect.get();
             } catch (HttpStatusException er) {
-
+                er.printStackTrace();
             }
         }
 
@@ -114,11 +114,11 @@ public class Crawler {
                 if (list.size() != 0) {
                     for (String link : list) {
                         if (linkPresent(link)) {
-                            addLinkParent(link, index);
+                            addLinkParent(link, parentLink);
                         } else {
                             saveLink(link, null, i);
 //                            System.out.println(String.format("---> %s", link));
-                            crawl(i, link, index);
+                            crawl(i, link, parentLink);
                         }
                     }
                 }
@@ -164,8 +164,8 @@ public class Crawler {
 
     // Добавляет предка ссылке
 
-    private void addLinkParent(String url, Long id) {
-        linkDao.addParentLink(url, id);
+    private void addLinkParent(String url, Link id) {
+        linkDao.getLinkByAdress(url).addParent(id);
     }
 
     // Исключить файлы с расширением

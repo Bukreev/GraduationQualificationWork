@@ -74,9 +74,9 @@ public class LinkDao {
 
     // Добавить родительскую ссылку
 
-    public final void addParentLink(String url, Long parentId) {
-        Link link = linkRepository.findByAdress(url);
-        link.setParentId(parentId);
-        linkRepository.save(link);
-    }
+//    public final void addParentLink(String url, Long parentId) {
+//        Link link = linkRepository.findByAdress(url);
+//        link.setParentId(parentId);
+//        linkRepository.save(link);
+//    }
 }

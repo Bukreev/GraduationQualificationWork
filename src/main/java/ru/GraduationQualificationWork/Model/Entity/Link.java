@@ -34,7 +34,7 @@ public class Link {
     @Column(name = "Variables")
     private List<Variable> variable;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "link_parents",
     joinColumns = @JoinColumn(name = "link_id"))
     private List<Link> parents = new ArrayList<>();
