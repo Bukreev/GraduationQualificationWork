@@ -4,6 +4,7 @@ import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,10 +34,26 @@ public class Link {
     @Column(name = "Variables")
     private List<Variable> variable;
 
-//    @ElementCollection
-//    @CollectionTable(name = "Parents", joinColumns = @JoinColumn(name = "id"))
-    @Column(name = "Parents")
-    private Long parents;
+    @ManyToMany
+    @JoinTable(name = "link_parents",
+    joinColumns = @JoinColumn(name = "link_id"))
+    private List<Link> parents = new ArrayList<>();
+
+    public void setParents(List<Link> parents) {
+        this.parents = parents;
+    }
+
+    public void addParent(Link link) {
+        this.parents.add(link);
+    }
+
+    public List<Link> getParents() {
+        return parents;
+    }
+
+
+//    @Column(name = "Parents")
+//    private Long parents;
 
 
     public final Long getId() {
@@ -71,11 +88,11 @@ public class Link {
         this.variable = variable;
     }
 
-    public final Long getParentIdSet() {
-        return parents;
-    }
-
-    public final void setParentId(Long parentId) {
-        this.parents = parentId;
-    }
+//    public final Long getParentIdSet() {
+//        return parents;
+//    }
+//
+//    public final void setParentId(Long parentId) {
+//        this.parents = parentId;
+//    }
 }

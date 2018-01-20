@@ -17,6 +17,6 @@ public interface LinkRepository extends CrudRepository<Link, Long> {
     @Query("select l from #{#entityName} l where l.adress = ?1")
     Link findByAdress(String adress);
 
-//    @Query("update #{#entityName} l set l.parents = ?1 where l.adress = ?2")
-//    void updateParents(List<Link> parents, String adress);
+    @Query("update #{#entityName} l set l.parents = ?1 where l.adress = ?2")
+    void updateParents(List<Link> parents, String adress);
 }

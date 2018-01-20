@@ -71,4 +71,12 @@ public class LinkDao {
     public final Link getLinkByAdress(String adress) {
         return linkRepository.findByAdress(adress);
     }
+
+    // Добавить родительскую ссылку
+
+    public final void addParentLink(String url, Long parentId) {
+        Link link = linkRepository.findByAdress(url);
+        link.setParentId(parentId);
+        linkRepository.save(link);
+    }
 }

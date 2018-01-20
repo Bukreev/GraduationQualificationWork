@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 @Configuration
 @SpringBootApplication
-//@EnableTransactionManagement
 @EnableAutoConfiguration
 public class GraduationQualificationWorkApplication {
 
@@ -35,7 +34,8 @@ public class GraduationQualificationWorkApplication {
 		final Crawler spider = context.getBean(Crawler.class);
 
 		try {
-		    spider.setBaseUrl("http://www.google.com");
+		    spider.setBaseUrl("http://www.amerikos.com");
+		    spider.setExcludeExtensions("txt", "xml", "jpg", "css", "js");
 			spider.crawl(3);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -44,9 +44,9 @@ public class GraduationQualificationWorkApplication {
 		LinkDao linkDao = context.getBean(LinkDao.class);
 		List<Link> request = linkDao.getAllLinks();
 
-		request.stream().map((x) -> x.getAdress())
-				.peek((x) -> System.out.println("#### " + x))
-				.collect(Collectors.toSet());
+//		request.stream().map((x) -> x.getAdress())
+//				.peek((x) -> System.out.println("#### " + x))
+//				.collect(Collectors.toSet());
 
 	}
 }
