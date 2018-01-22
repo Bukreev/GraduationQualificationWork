@@ -80,9 +80,9 @@ public class Crawler {
             if (list.size() != 0) {
                 for (String link : list) {
                     saveLink(link, null, i);
-                    List<Link> parent = linkDao.getLinkByAdress(link).getParents();
+                    Link parent = linkDao.getLinkByAdress(link);
                     System.out.println(String.format("%s --->", link));
-                    crawl(i, link, null);
+                    crawl(i, link, parent);
                 }
 
             }
@@ -117,7 +117,7 @@ public class Crawler {
                             addLinkParent(link, parentLink);
                         } else {
                             saveLink(link, null, i);
-//                            System.out.println(String.format("---> %s", link));
+                            System.out.println(String.format("---> %s", link));
                             crawl(i, link, parentLink);
                         }
                     }
