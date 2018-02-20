@@ -1,18 +1,12 @@
-package ru.GraduationQualificationWork.Crawler;
+package ru.GraduationQualificationWork.Spider;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.junit.Before;
 import org.junit.Test;
-import org.jsoup.nodes.Document;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -20,17 +14,14 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.GraduationQualificationWork.Model.DAO.LinkDao;
-import ru.GraduationQualificationWork.Model.Entity.Link;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration
-public class CrawlerTest implements ApplicationContextAware {
+public class SpiderTest implements ApplicationContextAware {
 
-    private Crawler crawler;
+    private Spider spider;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -38,7 +29,7 @@ public class CrawlerTest implements ApplicationContextAware {
     private final String url = "http://google.com";
     private  LinkDao linkDao;
 
-    public CrawlerTest() {
+    public SpiderTest() {
 
     }
 
@@ -55,15 +46,15 @@ public class CrawlerTest implements ApplicationContextAware {
 
     @Test
     public final void getConnectionTest() {
-        assertEquals("Google", crawler.getTitle());
+        assertEquals("Google", spider.getTitle());
     }
 
     @Test
     public final void crawlTest() {
         int count = 3;
         try {
-            crawler.setBaseUrl(url);
-            crawler.crawl(count);
+            spider.setBaseUrl(url);
+            spider.crawl(count);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -73,7 +64,7 @@ public class CrawlerTest implements ApplicationContextAware {
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
-        this.crawler = applicationContext.getBean(Crawler.class);
+        this.spider = applicationContext.getBean(Spider.class);
     }
 
 //    @Test

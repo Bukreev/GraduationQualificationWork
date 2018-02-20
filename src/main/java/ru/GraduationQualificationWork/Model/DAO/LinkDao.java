@@ -56,14 +56,14 @@ public class LinkDao {
         List<Link> parents = new ArrayList();
         Link link = new Link();
         link.setAdress(url);
-//        link.setParentLinks(parents);
         linkRepository.save(link);
     }
 
     // Добавить родителя
 
-    public final void addParent(Link link) {
-
+    public final void addParent(Link link, Link parent) {
+        link.addParent(parent);
+        linkRepository.save(link);
     }
 
     // Найти ссылку по адресу
@@ -72,11 +72,5 @@ public class LinkDao {
         return linkRepository.findByAdress(adress);
     }
 
-    // Добавить родительскую ссылку
 
-//    public final void addParentLink(String url, Long parentId) {
-//        Link link = linkRepository.findByAdress(url);
-//        link.setParentId(parentId);
-//        linkRepository.save(link);
-//    }
 }
